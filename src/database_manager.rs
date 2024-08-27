@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection, Result};
 
-use crate::task_manager::Task;
+use crate::task_manager::{State, Task};
 
 pub struct DatabaseManager {
     connection: Connection,
@@ -12,32 +12,18 @@ impl DatabaseManager {
         DatabaseManager { connection: db }
     }
 
-    pub fn new_task(&self, name: String, state: String) {
+    pub fn new_task(&self, name: String, state: State) -> Result<()> {
         let mut stmt = self
             .connection
-            .prepare("SELECT * FROM tasks ORDER BY id DESC LIMIT 1")
-            .unwrap();
-        let task_id =
-            stmt.query_row((), |row| {
-                Ok(Task {
-                    id: row.get(0).unwrap(),
-                    name: row.get(1).unwrap(),
-                    state: row.get(2).unwrap(),
-                })
-            })
-            .unwrap_or(Task {
-                id: -1,
-                name: "blank".to_string(),
-                state: String::from("Todo"),
-            })
-            .id + 1;
+            .prepare("SELECT id FROM tasks ORDER BY id DESC LIMIT 1")?;
 
-        self.connection
-            .execute(
-                "INSERT INTO tasks (id, name, state) VALUES (?1, ?2, ?3)",
-                params![task_id, name, state],
-            )
-            .unwrap();
+        let task_id: i32 = stmt.query_row([], |row| row.get(0)).unwrap_or(-1) + 1;
+
+        self.connection.execute(
+            "INSERT INTO tasks (id, name, state) VALUES (?1, ?2, ?3)",
+            params![task_id, name, state.to_string().to_lowercase()],
+        )?;
+        Ok(())
     }
 
     pub fn delete_task(&self, task_id: i32) -> Result<usize> {
@@ -52,21 +38,28 @@ impl DatabaseManager {
         )
     }
 
-    pub fn get_all_tasks(&self) -> Vec<Task> {
-        let mut stmt = self.connection.prepare("SELECT * FROM tasks").unwrap();
+    pub fn get_all_tasks(&self) -> Result<Vec<Task>> {
+        let mut stmt = self
+            .connection
+            .prepare("SELECT id, name, state FROM tasks")?;
 
-        let tasks = stmt
-            .query_map((), |row| {
-                Ok(Task {
-                    id: row.get(0).unwrap(),
-                    name: row.get(1).unwrap(),
-                    state: row.get(2).unwrap(),
-                })
+        let tasks = stmt.query_map([], |row| {
+            let state_str: String = row.get(2)?;
+            let state = match state_str.as_str() {
+                "inprogress" => State::InProgress,
+                "backlog" => State::Backlog,
+                "done" => State::Done,
+                _ => State::Uncategorized,
+            };
+
+            Ok(Task {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                state,
             })
-            .unwrap();
+        })?;
 
-        let task_vec: Vec<Task> = tasks.map(|x| x.unwrap()).collect();
-        task_vec
+        Ok(tasks.collect::<Result<Vec<Task>>>()?)
     }
 }
 

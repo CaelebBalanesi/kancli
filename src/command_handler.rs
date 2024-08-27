@@ -1,5 +1,5 @@
 use crate::database_manager::DatabaseManager;
-use crate::task_manager::Task;
+use crate::task_manager::{State, Task};
 
 pub fn command_handler_init(mut args: Vec<String>, db_manager: DatabaseManager) {
     if args[0] == "add" {
@@ -23,7 +23,22 @@ pub fn command_handler_init(mut args: Vec<String>, db_manager: DatabaseManager) 
 }
 
 fn add(args: Vec<String>, db_manager: DatabaseManager) {
-    db_manager.new_task(args[0].clone(), args[1].clone());
+    let state: State;
+    match args[1].as_str() {
+        "1" => {
+            state = State::Backlog;
+        }
+        "2" => {
+            state = State::InProgress;
+        }
+        "3" => {
+            state = State::Done;
+        }
+        _ => {
+            state = State::Uncategorized;
+        }
+    }
+    db_manager.new_task(args[0].clone(), state);
 }
 
 fn delete(args: Vec<String>, db_manager: DatabaseManager) {
@@ -39,9 +54,9 @@ fn update(args: Vec<String>, db_manager: DatabaseManager) {
 }
 
 fn list(args: Vec<String>, db_manager: DatabaseManager) {
-    let tasks: Vec<Task> = db_manager.get_all_tasks();
+    let tasks: Vec<Task> = db_manager.get_all_tasks().unwrap();
     for task in tasks {
-        println!("{:?}", task);
+        println!("{} - {} - {}", task.id, task.state, task.name);
     }
 }
 
