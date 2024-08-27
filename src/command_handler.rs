@@ -23,22 +23,9 @@ pub fn command_handler_init(mut args: Vec<String>, db_manager: DatabaseManager) 
 }
 
 fn add(args: Vec<String>, db_manager: DatabaseManager) {
-    let state: State;
-    match args[1].as_str() {
-        "1" => {
-            state = State::Backlog;
-        }
-        "2" => {
-            state = State::InProgress;
-        }
-        "3" => {
-            state = State::Done;
-        }
-        _ => {
-            state = State::Uncategorized;
-        }
-    }
-    db_manager.new_task(args[0].clone(), state);
+    db_manager
+        .new_task(args[0].clone(), State::Backlog)
+        .unwrap();
 }
 
 fn delete(args: Vec<String>, db_manager: DatabaseManager) {
@@ -48,8 +35,22 @@ fn delete(args: Vec<String>, db_manager: DatabaseManager) {
 }
 
 fn update(args: Vec<String>, db_manager: DatabaseManager) {
+    println!("To what state would you like to change to?\n[1] Backlog\n[2] In Progress\n[3] Done");
+    let mut new_state_str = String::new();
+
+    let _ = std::io::stdin().read_line(&mut new_state_str);
+
+    println!("{}", new_state_str);
+
+    let state: State = match new_state_str.trim() {
+        "1" => State::Backlog,
+        "2" => State::InProgress,
+        "3" => State::Done,
+        _ => State::Uncategorized,
+    };
+
     db_manager
-        .update_state(args[0].parse::<i32>().unwrap(), args[1].clone())
+        .update_state(args[0].parse::<i32>().unwrap(), state)
         .unwrap();
 }
 

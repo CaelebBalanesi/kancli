@@ -31,10 +31,11 @@ impl DatabaseManager {
             .execute("DELETE FROM tasks WHERE id = ?1", params![task_id])
     }
 
-    pub fn update_state(&self, task_id: i32, new_state: String) -> Result<usize> {
+    pub fn update_state(&self, task_id: i32, new_state: State) -> Result<usize> {
+        println!("The new state is: {}", new_state.to_string().to_lowercase());
         self.connection.execute(
             "UPDATE tasks SET state = ?1 WHERE id = ?2",
-            params![new_state, task_id],
+            params![new_state.to_string().to_lowercase(), task_id],
         )
     }
 
@@ -59,7 +60,7 @@ impl DatabaseManager {
             })
         })?;
 
-        Ok(tasks.collect::<Result<Vec<Task>>>()?)
+        tasks.collect::<Result<Vec<Task>>>()
     }
 }
 
