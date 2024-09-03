@@ -13,7 +13,7 @@ pub fn command_handler_init(mut args: Vec<String>, db_manager: DatabaseManager) 
         args.remove(0);
         delete(args, db_manager);
     } else if args[0] == "version" {
-        println!("v1.0.0");
+        version();
     } else if args[0] == "help" {
         help();
     } else if args[0] == "list" {
@@ -61,5 +61,9 @@ fn list(args: Vec<String>, db_manager: DatabaseManager) {
 }
 
 fn help() {
-    println!("add - \nupdate - \ndelete - \nlist - \nversion - ");
+    println!("add \"{{name of task}}\"\nupdate {{task id}}\ndelete {{task id}} \nlist\nversion");
+}
+
+fn version() {
+    println!("v1.0.0");
 }
