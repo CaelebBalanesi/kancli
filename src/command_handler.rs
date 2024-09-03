@@ -1,4 +1,5 @@
 use crate::database_manager::DatabaseManager;
+use crate::graphics;
 use crate::task_manager::{State, Task};
 
 pub fn command_handler_init(mut args: Vec<String>, db_manager: DatabaseManager) {
@@ -56,9 +57,7 @@ fn update(args: Vec<String>, db_manager: DatabaseManager) {
 
 fn list(args: Vec<String>, db_manager: DatabaseManager) {
     let tasks: Vec<Task> = db_manager.get_all_tasks().unwrap();
-    for task in tasks {
-        println!("{} - {} - {}", task.id, task.state, task.name);
-    }
+    graphics::draw_tasks(tasks);
 }
 
 fn help() {

@@ -1,5 +1,6 @@
 mod command_handler;
 mod database_manager;
+mod graphics;
 mod task_manager;
 
 use command_handler::command_handler_init;
